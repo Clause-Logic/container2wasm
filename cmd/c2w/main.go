@@ -83,6 +83,11 @@ func main() {
 			Name:  "pack",
 			Usage: "Overwrite directory to pack with the emulator (valid only for aarch64 QEMU on emscripten)",
 		},
+		cli.StringSliceFlag{
+			Name:  "cache-from",
+			Usage: "BuildKit cache source (e.g. type=registry,ref=ghcr.io/org/c2w-cache). Defaults to the public standd cache.",
+			Value: &cli.StringSlice{"type=registry,ref=ghcr.io/clause-logic/c2w-cache"},
+		},
 	}, flags...)
 	app.Action = rootAction
 	if err := app.Run(os.Args); err != nil {
@@ -241,6 +246,9 @@ func build(builderPath string, srcImgPath string, destDir, destFile string, clic
 	}
 	for _, a := range clicontext.StringSlice("build-arg") {
 		buildxArgs = append(buildxArgs, "--build-arg", a)
+	}
+	for _, c := range clicontext.StringSlice("cache-from") {
+		buildxArgs = append(buildxArgs, "--cache-from", c)
 	}
 	buildxArgs = append(buildxArgs, clicontext.StringSlice("extra-flag")...)
 	buildxArgs = append(buildxArgs, srcImgPath)

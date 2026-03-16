@@ -1,0 +1,64 @@
+name: Build and cache heavy stages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - '.github/workflows/build-cache.yml'
+  schedule:
+    - cron: '0 3 * * 0'  # Weekly Sunday 3am UTC
+  workflow_dispatch:
+
+env:
+  CACHE_REF: ghcr.io/clause-logic/c2w-cache
+
+jobs:
+  build-cache:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - tinyemu-dev-common     # Rust + WASI SDK + Wizer — the biggest one
+          - linux-riscv64-dev      # riscv64 kernel
+          - linux-amd64-dev        # amd64 kernel
+          - busybox-riscv64-dev    # BusyBox riscv64
+          - busybox-amd64-dev      # BusyBox amd64
+          - bbl-dev                # RISC-V bootloader
+          - grub-amd64-dev         # GRUB
+          - bios-amd64-dev         # BIOS files
+          - runc-amd64-dev         # runc amd64
+          - runc-riscv64-dev       # runc riscv64
+          - init-amd64-dev         # init amd64
+          - init-riscv64-dev       # init riscv64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.target }} and push to cache
+        run: |
+          # Empty context — none of these targets reference oci-image-src
+          mkdir -p /tmp/empty-ctx
+
+          docker buildx build \
+            --platform linux/amd64 \
+            --target ${{ matrix.target }} \
+            --cache-from type=registry,ref=${{ env.CACHE_REF }} \
+            --cache-to   type=registry,ref=${{ env.CACHE_REF }},mode=max \
+            -f Dockerfile \
+            /tmp/empty-ctx
