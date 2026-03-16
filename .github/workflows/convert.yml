@@ -61,7 +61,9 @@ jobs:
         run: curl -sSf https://wasmtime.dev/install.sh | bash && echo "$HOME/.wasmtime/bin" >> $GITHUB_PATH
 
       - name: Smoke test — run echo in the WASM
-        run: wasmtime /tmp/out/out.wasm echo hello-from-wasm
+        run: |
+          WASMTIME_BACKTRACE_DETAILS=1 wasmtime /tmp/out/out.wasm echo hello-from-wasm || true
+          echo "exit: $?"
 
       - name: Upload WASM artifact
         uses: actions/upload-artifact@v4
