@@ -54,10 +54,12 @@ jobs:
             --cache-from type=registry,ref=${{ env.CACHE_REF }} \
             ${{ inputs.image }} \
             /tmp/out/out.wasm
+          # Sanitize image name for artifact (replace : and / with -)
+          echo "ARTIFACT_NAME=$(echo '${{ inputs.image }}' | tr ':/' '--')-${{ inputs.target_arch }}" >> $GITHUB_ENV
 
       - name: Upload WASM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.image && format('{0}', inputs.image) || 'out' }}-${{ inputs.target_arch }}.wasm
+          name: ${{ env.ARTIFACT_NAME }}
           path: /tmp/out/out.wasm
           retention-days: 7
