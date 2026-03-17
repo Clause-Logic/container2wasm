@@ -88,7 +88,7 @@ func main() {
 		go func() {
 			fmt.Fprintf(os.Stderr, "waiting for NW initialization\n")
 			var conn net.Conn
-			for i := 0; i < 10; i++ {
+			for i := 0; i < 60; i++ {
 				time.Sleep(1 * time.Second)
 				log.Printf("connecting to NW...\n")
 				conn, err = net.Dial("tcp", *wasiAddr)
