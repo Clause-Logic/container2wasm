@@ -115,7 +115,7 @@ func main() {
 			wasmtimeArgs = append(wasmtimeArgs, "--")
 			cmd = exec.Command("wasmtime", append(wasmtimeArgs, args...)...)
 		} else {
-			wasmtimeArgs := append([]string{"run", "-S", "preview2=n", "-S", "tcplisten=" + *wasiAddr, "--env=LISTEN_FDS=1"}, dirArgs...)
+			wasmtimeArgs := append([]string{"run", "-S", "tcplisten=" + *wasiAddr, "--env=LISTEN_FDS=1"}, dirArgs...)
 			wasmtimeArgs = append(wasmtimeArgs, "--")
 			cmd = exec.Command("wasmtime", append(wasmtimeArgs, args...)...)
 		}
