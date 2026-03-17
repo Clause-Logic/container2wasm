@@ -26,7 +26,9 @@ const (
 
 func main() {
 	var portFlags sliceFlags
+	var dirFlags sliceFlags
 	flag.Var(&portFlags, "p", "map port between host and guest (host:guest). -mac must be set correctly.")
+	flag.Var(&dirFlags, "dir", "mount host directory into the container (host::guest or host). Can be specified multiple times.")
 	var (
 		debug         = flag.Bool("debug", false, "enable debug print")
 		listenWS      = flag.Bool("listen-ws", false, "listen on a websocket port specified as argument")
@@ -103,11 +105,19 @@ func main() {
 				log.Printf("failed AcceptQemu: %v\n", err)
 			}
 		}()
+		var dirArgs []string
+		for _, d := range dirFlags {
+			dirArgs = append(dirArgs, "--dir", d)
+		}
 		var cmd *exec.Cmd
 		if *wasmtimeCli13 {
-			cmd = exec.Command("wasmtime", append([]string{"run", "--tcplisten=" + *wasiAddr, "--env='LISTEN_FDS=1'", "--"}, args...)...)
+			wasmtimeArgs := append([]string{"run", "--tcplisten=" + *wasiAddr, "--env=LISTEN_FDS=1"}, dirArgs...)
+			wasmtimeArgs = append(wasmtimeArgs, "--")
+			cmd = exec.Command("wasmtime", append(wasmtimeArgs, args...)...)
 		} else {
-			cmd = exec.Command("wasmtime", append([]string{"run", "-S", "preview2=n", "-S", "tcplisten=" + *wasiAddr, "--env='LISTEN_FDS=1'", "--"}, args...)...)
+			wasmtimeArgs := append([]string{"run", "-S", "preview2=n", "-S", "tcplisten=" + *wasiAddr, "--env=LISTEN_FDS=1"}, dirArgs...)
+			wasmtimeArgs = append(wasmtimeArgs, "--")
+			cmd = exec.Command("wasmtime", append(wasmtimeArgs, args...)...)
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
